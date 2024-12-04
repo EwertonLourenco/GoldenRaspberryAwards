@@ -77,6 +77,22 @@ namespace GoldenRaspberryAwards.Tests.Integration
             Assert.True(result.Min.Any(), "The Min list should not be empty.");
             Assert.True(result.Max.Any(), "The Max list should not be empty.");
 
+            // Verificar intervalo mínimo
+            var minInterval = result.Min.FirstOrDefault();
+            Assert.NotNull(minInterval);
+            Assert.Equal(1, minInterval.Interval);
+            Assert.True(minInterval.PreviousWin > 0, "PreviousWin should be a valid year.");
+            Assert.True(minInterval.FollowingWin > 0, "FollowingWin should be a valid year.");
+            Assert.True(minInterval.PreviousWin < minInterval.FollowingWin, "PreviousWin should be before FollowingWin.");
+
+            // Verificar intervalo máximo
+            var maxInterval = result.Max.FirstOrDefault();
+            Assert.NotNull(maxInterval);
+            Assert.Equal(13, maxInterval.Interval);
+            Assert.True(maxInterval.PreviousWin > 0, "PreviousWin should be a valid year.");
+            Assert.True(maxInterval.FollowingWin > 0, "FollowingWin should be a valid year.");
+            Assert.True(maxInterval.PreviousWin < maxInterval.FollowingWin, "PreviousWin should be before FollowingWin.");
+
             // Ensure valid structure
             foreach (var interval in result.Min.Concat(result.Max))
             {
@@ -87,5 +103,6 @@ namespace GoldenRaspberryAwards.Tests.Integration
                 Assert.True(interval.PreviousWin < interval.FollowingWin, "PreviousWin should be before FollowingWin.");
             }
         }
+
     }
 }

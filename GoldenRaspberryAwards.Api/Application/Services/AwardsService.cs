@@ -16,99 +16,76 @@ namespace GoldenRaspberryAwards.Api.Application.Services
 
         public AwardIntervalsDto GetAwardIntervals()
         {
-            var winners = GetWinners();
-
-            var producerWins = GroupWinnersByProducer(winners);
-
-            var producerIntervals = CalculateProducerIntervals(producerWins);
-
-            return GetMinMaxIntervals(producerIntervals);
-        }
-
-        private List<Movie> GetWinners()
-        {
-            return _context.Movies
+            var winners = _context.Movies
                 .Where(m => m.IsWinner)
                 .ToList();
-        }
 
-        private Dictionary<string, List<int>> GroupWinnersByProducer(List<Movie> winners)
-        {
-            return winners
-                .SelectMany(m => m.Producers.Split(", ").Select(producer => new { producer, year = m.Year }))
-                .GroupBy(x => x.producer)
-                .ToDictionary(
-                    group => group.Key,
-                    group => group.Select(x => x.year).OrderBy(year => year).ToList()
-                );
-        }
+            var producerWins = new Dictionary<string, List<int>>();
 
-        private List<ProducerInterval> CalculateProducerIntervals(Dictionary<string, List<int>> producerWins)
-        {
-            var intervals = new List<ProducerInterval>();
+            foreach (var movie in winners)
+            {
+                var producers = movie.Producers
+                    .Split(new[] { ",", " e ", " and " }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim());
+
+                foreach (var producer in producers)
+                {
+                    if (!producerWins.ContainsKey(producer))
+                    {
+                        producerWins[producer] = new List<int>();
+                    }
+                    producerWins[producer].Add(movie.Year);
+                }
+            }
+
+            var producerIntervals = new List<ProducerInterval>();
 
             foreach (var producer in producerWins)
             {
-                var years = producer.Value;
-
-                if (years.Count < 2) continue;
-
-                var producerIntervals = years.Zip(years.Skip(1), (prev, next) => new Interval
+                var years = producer.Value.OrderBy(y => y).ToList();
+                for (int i = 0; i < years.Count - 1; i++)
                 {
-                    IntervalValue = next - prev,
-                    PreviousWin = prev,
-                    FollowingWin = next
-                }).ToList();
-
-                intervals.Add(new ProducerInterval
-                {
-                    Producer = producer.Key,
-                    Intervals = producerIntervals
-                });
+                    producerIntervals.Add(new ProducerInterval
+                    {
+                        Producer = producer.Key,
+                        Interval = years[i + 1] - years[i],
+                        PreviousWin = years[i],
+                        FollowingWin = years[i + 1]
+                    });
+                }
             }
 
-            return intervals;
-        }
+            var minInterval = producerIntervals.Min(pi => pi.Interval);
+            var maxInterval = producerIntervals.Max(pi => pi.Interval);
 
-        private AwardIntervalsDto GetMinMaxIntervals(List<ProducerInterval> producerIntervals)
-        {
-            var minIntervalValue = producerIntervals
-                .SelectMany(p => p.Intervals)
-                .Min(i => i.IntervalValue);
+            var minProducers = producerIntervals
+                .Where(pi => pi.Interval == minInterval)
+                .Select(pi => new ProducerAwardDto
+                {
+                    Producer = pi.Producer,
+                    Interval = pi.Interval,
+                    PreviousWin = pi.PreviousWin,
+                    FollowingWin = pi.FollowingWin
+                })
+                .ToList();
 
-            var maxIntervalValue = producerIntervals
-                .SelectMany(p => p.Intervals)
-                .Max(i => i.IntervalValue);
+            var maxProducers = producerIntervals
+                .Where(pi => pi.Interval == maxInterval)
+                .Select(pi => new ProducerAwardDto
+                {
+                    Producer = pi.Producer,
+                    Interval = pi.Interval,
+                    PreviousWin = pi.PreviousWin,
+                    FollowingWin = pi.FollowingWin
+                })
+                .ToList();
 
             return new AwardIntervalsDto
             {
-                Min = producerIntervals
-                    .SelectMany(p => p.Intervals
-                        .Where(i => i.IntervalValue == minIntervalValue)
-                        .Select(i => new ProducerAwardDto
-                        {
-                            Producer = p.Producer,
-                            Interval = i.IntervalValue,
-                            PreviousWin = i.PreviousWin,
-                            FollowingWin = i.FollowingWin
-                        })
-                    )
-                    .ToList(),
-                Max = producerIntervals
-                    .SelectMany(p => p.Intervals
-                        .Where(i => i.IntervalValue == maxIntervalValue)
-                        .Select(i => new ProducerAwardDto
-                        {
-                            Producer = p.Producer,
-                            Interval = i.IntervalValue,
-                            PreviousWin = i.PreviousWin,
-                            FollowingWin = i.FollowingWin
-                        })
-                    )
-                    .ToList()
+                Min = minProducers,
+                Max = maxProducers
             };
         }
-
 
         public List<Movie> GetAllMovies()
         {
