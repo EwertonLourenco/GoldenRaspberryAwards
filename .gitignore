@@ -1,0 +1,70 @@
+# Diretórios e arquivos do Visual Studio
+.vs/
+*.user
+*.suo
+*.cache
+*.log
+
+# Build do projeto
+bin/
+obj/
+out/
+
+# Configurações do Rider
+.idea/
+
+# Configurações locais do VS Code
+.vscode/
+
+# Arquivos de configuração temporários e de depuração
+launchSettings.json
+
+# Pacotes e dependências
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+
+# Logs
+*.log
+logs/
+
+# Diretórios temporários
+tmp/
+temp/
+*.tmp
+
+# Arquivos de backup
+*.bak
+*.swp
+
+# Configuração do Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# Certificados de desenvolvimento
+*.pfx
+*.key
+
+# Configurações de ambiente local
+appsettings.Development.json
+appsettings.Local.json
+
+# Arquivos de teste gerados automaticamente
+TestResults/
+*.coverage
+*.coveragexml
+*.trx
+
+# Arquivos gerados pelo Docker
+.dockerignore
+docker-compose.override.yml
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Outros arquivos ignoráveis
+*.vsidx
+*.vscodeignore
+*.lock.json
